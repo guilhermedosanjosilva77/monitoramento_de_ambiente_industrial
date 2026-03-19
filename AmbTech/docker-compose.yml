@@ -1,12 +1,12 @@
-services:
+services: 
 
-  mysql:
+  mysql: 
     image: mysql:8.0
-    container_name: temperaturas
-    restart: unless-stopped
+    container_name: cadastro_mysql
+    restart: unless-stopped #restarta automaticamente se cair, exceto se parar manualemnte
 
     env_file:
-    - .env
+      - .env
 
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
@@ -15,4 +15,47 @@ services:
       MYSQL_PASSWORD: ${MYSQL_PASSWORD}
 
     ports:
-    - "3316:3306"
+      - "3316:3306" #porta 3316 no windows/host aponta para 3306 dentro do container (MYSQL)
+
+    volumes:
+      - mysql_data:/var/lib/mysql #volume nomeado para persistir dados do mysql (banco nao se perde)
+      - ./mysql/init:/docker-entrypoint-initdb.d # monta scripts sql para rodar na primeira inicializaçõa do banco
+
+    healthcheck:
+
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u root -p$$MYSQL_ROOT_PASSWORD || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 25s
+
+  backend:
+    build: 
+      context: ./backend
+    container_name: cadastro_backend
+    restart: unless-stopped
+
+    env_file:
+      - .env
+
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+    environment:
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME}  
+      FLASK_SECRET_KEY: ${FLASK_SECRET_KEY}
+      FLASK_DEBUG: ${FLASK_DEBUG}
+
+    ports:
+      - "5000:5000"
+
+    volumes:
+      - ./backend:/app
+
+volumes: 
+  mysql_data:
