@@ -23,6 +23,8 @@ def send_data(temp, um):
 while True:
     temp = round(random.uniform(20, 90),2)
     um = round(random.uniform(50, 80),2)
+    
+    
 
     send_data(temp, um)
 
