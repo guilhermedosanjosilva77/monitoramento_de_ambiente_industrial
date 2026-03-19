@@ -1,0 +1,12 @@
+services:
+ mysql:
+  image: mysql:8.0
+  container_name: cadastro_mysql
+  restart: unless-stopped
+
+  env_file:
+  - .env
+
+  enviroment:
+   MYSQL_ROOT-PASSWORD: aluno
+   MYSQL_DATABASE: 
