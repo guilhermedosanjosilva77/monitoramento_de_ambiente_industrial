@@ -1,12 +1,13 @@
-services: 
+services:
 
-  mysql: 
-    image: mysql:8.0
-    container_name: cadastro_mysql
-    restart: unless-stopped #restarta automaticamente se cair, exceto se parar manualemnte
+  # ── Serviço 1: Banco de dados MySQL ─────────────────────────────────────────
+  mysql:
+    image: mysql:8.0            
+    container_name: ambtech_mysql
+    restart: unless-stopped     
 
     env_file:
-      - .env
+      - .env                     
 
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
@@ -15,24 +16,29 @@ services:
       MYSQL_PASSWORD: ${MYSQL_PASSWORD}
 
     ports:
-      - "3316:3306" #porta 3316 no windows/host aponta para 3306 dentro do container (MYSQL)
+      - "3316:3306"   # porta 3316 no computador → 3306 dentro do container
+                      # assim acessa pelo DBeaver/MySQL Workbench na 3316
 
     volumes:
-      - mysql_data:/var/lib/mysql #volume nomeado para persistir dados do mysql (banco nao se perde)
-      - ./mysql/init:/docker-entrypoint-initdb.d # monta scripts sql para rodar na primeira inicializaçõa do banco
+      - mysql_data:/var/lib/mysql           # persiste os dados do banco entre reinicializações
+      - ./db:/docker-entrypoint-initdb.d 
+                                            # o MySQL executa automaticamente os .sql desta pasta
+                                            # apenas na PRIMEIRA vez que o container sobe
 
     healthcheck:
-
+      # verifica se o MySQL está pronto para receber conexões
       test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u root -p$$MYSQL_ROOT_PASSWORD || exit 1"]
-      interval: 5s
-      timeout: 5s
-      retries: 30
-      start_period: 25s
+      interval: 5s       # testa a cada 5 segundos
+      timeout: 5s        # aguarda até 5 s pela resposta
+      retries: 30        # tenta até 30 vezes antes de desistir
+      start_period: 25s  # espera 25 s antes de começar a testar (MySQL demora para iniciar)
 
+
+  # ── Serviço 2: Aplicação Flask ───────────────────────────────────────────────
   backend:
-    build: 
-      context: ./backend
-    container_name: cadastro_backend
+    build:
+      context: .    # pasta onde está o Dockerfile e o código Python (raiz)
+    container_name: ambtech_backend
     restart: unless-stopped
 
     env_file:
@@ -40,22 +46,23 @@ services:
 
     depends_on:
       mysql:
-        condition: service_healthy
+        condition: service_healthy   # só sobe APÓS o MySQL estar saudável (healthcheck ok)
 
     environment:
       DB_HOST: ${DB_HOST}
       DB_PORT: ${DB_PORT}
       DB_USER: ${DB_USER}
       DB_PASSWORD: ${DB_PASSWORD}
-      DB_NAME: ${DB_NAME}  
+      DB_NAME: ${DB_NAME}
       FLASK_SECRET_KEY: ${FLASK_SECRET_KEY}
       FLASK_DEBUG: ${FLASK_DEBUG}
 
     ports:
-      - "5000:5000"
+      - "5000:5000"   
 
     volumes:
-      - ./backend:/app
+      - ./app:/app    # monta o código local dentro do container
+                     
 
-volumes: 
-  mysql_data:
+volumes:
+  mysql_data:  

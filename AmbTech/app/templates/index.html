@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AmbTech — Monitoramento Ambiental</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Exo+2:wght@300;600;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../static/style.css">
+</head>
+<body>
+
+  <header>
+    <div class="logo-dot"></div>
+    <div>
+      <h1>Amb<span>Tech</span></h1>
+      <p class="subtitle">// sistema de monitoramento ambiental industrial</p>
+    </div>
+  </header>
+
+  <!-- Cards — usa feeds[-1] que é o último item da lista -->
+  <div class="cards">
+    <div class="card">
+      <div class="card-label">Última Temperatura</div>
+      <div class="card-value">
+        {{ feeds[-1]["field1"] if feeds else '—' }}
+        <span class="card-unit">°C</span>
+      </div>
+    </div>
+    <div class="card umid">
+      <div class="card-label">Última Umidade</div>
+      <div class="card-value">
+        {{ feeds[-1]["field2"] if feeds else '—' }}
+        <span class="card-unit">%</span>
+      </div>
+    </div>
+    <div class="card total">
+      <div class="card-label">Registros Carregados</div>
+      <div class="card-value">{{ feeds | length }}</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Última Atualização</div>
+      <div class="card-value" style="font-size:1rem; margin-top:.6rem;">
+        {{ feeds[-1]["created_at"][:16].replace('T',' ') if feeds else '—' }}
+      </div>
+    </div>
+  </div>
+
+  <div class="actions">
+    <a href="/"       class="btn btn-primary">↻ Atualizar Dados</a>
+    <a href="/enviar" class="btn btn-secondary">⚡ Enviar Simulação</a>
+  </div>
+
+  <div class="table-wrap">
+    <div class="table-title">▸ Registros do ThingSpeak</div>
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Data / Hora</th>
+          <th>Temperatura (°C)</th>
+          <th>Umidade (%)</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% if feeds %}
+          {% for item in feeds %}
+          <tr>
+            <td>{{ loop.index }}</td>
+            <td>{{ item["created_at"][:19].replace('T', ' ') }}</td>
+            <td>{{ item["field1"] }}</td>
+            <td>{{ item["field2"] }}</td>
+          </tr>
+          {% endfor %}
+        {% else %}
+          <tr><td colspan="4" class="empty-row">Nenhum registro encontrado.</td></tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+
+  <footer>AmbTech Soluções Inteligentes · ThingSpeak + MySQL + Docker</footer>
+
+</body>
+</html>
